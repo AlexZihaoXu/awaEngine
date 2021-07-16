@@ -5,8 +5,9 @@
 To add this library, open `build.gradle` and add the following lines:
 ```kts
 repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { 
+        url 'https://jitpack.io' 
+    }
 }
 
 dependencies {
