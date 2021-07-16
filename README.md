@@ -74,4 +74,4 @@ public class Main {
 }
 ```
 Running this class will start a window and display a rotating green square in the center of the screen.
-For more tutorial please visit our wiki.
+For more tutorial please visit our [wiki](https://github.com/AlexZihaoXu/awaEngine/wiki).
