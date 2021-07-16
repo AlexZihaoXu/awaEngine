@@ -4,6 +4,11 @@
 ## How to use
 To add this library, open `build.gradle` and add the following lines:
 ```kts
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
     implementation 'com.github.AlexZihaoXu:awaEngine:1.0-SNAPSHOT'
     implementation 'org.lwjgl.lwjgl:lwjgl:2.9.3'
