@@ -2,6 +2,7 @@ package site.alex_xu.dev.frameworks.awaengine.controls;
 
 import site.alex_xu.dev.frameworks.awaengine.core.Core;
 import site.alex_xu.dev.frameworks.awaengine.video.Window;
+import site.alex_xu.dev.utils.Vec2D;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -11,6 +12,26 @@ public class Mouse extends Core {
     private static final boolean[] buttonStates = new boolean[16];
     private static final HashSet<Mouse> registeredListeners = new HashSet<>();
     private boolean listenerCreated = false;
+
+    public static final Vec2D position = new Vec2D();
+
+    public static float getX() {
+        return position.x;
+    }
+
+    public static float getY() {
+        return position.y;
+    }
+
+    public static boolean pressed(int button) {
+        if (button < 0 || button > 15)
+            return false;
+        return buttonStates[button];
+    }
+
+    public static boolean released(int button) {
+        return !pressed(button);
+    }
 
     protected static void _internalMouseEvents() {
         while (org.lwjgl.input.Mouse.next()) {
@@ -22,6 +43,8 @@ public class Mouse extends Core {
             int eventButton = org.lwjgl.input.Mouse.getEventButton();
             boolean eventButtonState = org.lwjgl.input.Mouse.getEventButtonState();
 
+            position.x = eventX;
+            position.y = eventY;
 
             if (eventDX != 0 || eventDY != 0) {  // motionEvent
                 _internalOnMotion(eventX, eventY, eventDX, eventDY);
