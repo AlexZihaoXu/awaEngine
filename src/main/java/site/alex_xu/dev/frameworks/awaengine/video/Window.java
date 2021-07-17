@@ -11,6 +11,8 @@ import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateWindowCreationE
 import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateWindowLaunchException;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.utils.Clock;
+import site.alex_xu.dev.utils.Size2i;
+import site.alex_xu.dev.utils.Vec2D;
 
 import java.awt.*;
 import java.io.*;
@@ -99,6 +101,8 @@ public abstract class Window extends Renderable {
     private boolean s_vSyncEnabled;
     private static boolean _logged = false;
     private boolean launched = false;
+    private Size2i previousSize;
+    private Vec2D previousPos;
 
     private static class MouseEventHandler extends Mouse {
         public static void handle() {
@@ -211,6 +215,28 @@ public abstract class Window extends Renderable {
 
     public void setTitle(String title) {
         Display.setTitle(title);
+    }
+
+    public void setFullscreen(boolean fullscreen) {
+        if (fullscreen == isFullscreen())
+            return;
+        try {
+            if (fullscreen) {
+                previousSize = getSize();
+                previousPos = new Vec2D(Display.getX(), Display.getY());
+                Display.setDisplayModeAndFullscreen(Display.getDesktopDisplayMode());
+            } else {
+                Display.setFullscreen(false);
+                Display.setDisplayMode(new DisplayMode(previousSize.width, previousSize.height));
+                Display.setLocation((int) previousPos.x, (int) previousPos.y);
+            }
+        } catch (LWJGLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isFullscreen() {
+        return Display.isFullscreen();
     }
 
     @Override

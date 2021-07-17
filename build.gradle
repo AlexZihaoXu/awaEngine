@@ -13,3 +13,11 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libraries/', include: '**/*.jar')
 }
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'site.alex_xu.dev.frameworks.awaengine.Main'
+        )
+    }
+}
