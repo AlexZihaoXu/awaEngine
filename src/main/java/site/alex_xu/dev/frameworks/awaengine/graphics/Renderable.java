@@ -11,7 +11,6 @@ public abstract class Renderable extends Displayable {
     private final Color strokeColor = new Color(0);
     private float strokeWeight = 1f;
     protected static Renderable renderingSlot = null;
-    private int matrixLevel = 0;
     private Font font = Font.getDefaultFont();
     private float fontSize = 24f;
 
@@ -70,11 +69,11 @@ public abstract class Renderable extends Displayable {
 
     public float getTextWidth(String text) {
 
-        return font.getUnicodeFont(fontSize, null).getWidth(text) * getTextAdditionalScale();
+        return font.getUnicodeFont(fontSize).getWidth(text) * getTextAdditionalScale();
     }
 
     public float getTextHeight(String text) {
-        return font.getUnicodeFont(fontSize, null).getHeight(text) * getTextAdditionalScale();
+        return font.getUnicodeFont(fontSize).getHeight(text) * getTextAdditionalScale();
     }
 
     // Basic Draws
@@ -185,9 +184,15 @@ public abstract class Renderable extends Displayable {
     public void blit(float x, float y, Displayable displayable) {
         _beginRender();
         displayable.bind();
-        Displayable.draw(x, y, displayable.getWidth(), displayable.getHeight());
+        displayable.draw(x, y, displayable.getWidth(), displayable.getHeight());
         displayable.unbind();
+    }
 
+    public void blit(float x, float y, Displayable displayable, float srcX, float srcY, float srcW, float srcH) {
+        _beginRender();
+        displayable.bind();
+        displayable.draw(x, y, displayable.getWidth(), displayable.getHeight(), srcX, srcY, srcW, srcH);
+        displayable.unbind();
     }
 
     // Transform

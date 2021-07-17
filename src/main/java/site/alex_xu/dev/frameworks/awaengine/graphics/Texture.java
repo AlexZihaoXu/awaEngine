@@ -14,18 +14,78 @@ import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 
-public final class Texture extends Displayable {
-    private final int id;
+class SubTexture extends Texture {
+    private final int x, y, w, h;
+    private final Texture origin;
+
+    public SubTexture(Texture origin, int x, int y, int w, int h) {
+        super(w, h);
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.origin = origin;
+    }
+
+    public Texture getSubTexture(int x, int y, int w, int h) {
+        if (w == -1)
+            w = this.w - x;
+        if (h == -1)
+            h = this.h - y;
+        w = Math.max(0, Math.min(w, this.w - x));
+        h = Math.max(0, Math.min(h, this.h - y));
+        return origin.getSubTexture(this.x + x, this.y + y, w, h);
+    }
+
+    @Override
+    public void bind() {
+        origin.bind();
+    }
+
+    @Override
+    public void unbind() {
+        origin.unbind();
+    }
+
+    @Override
+    protected void draw(float x, float y, float w, float h, float srcX, float srcY, float srcW, float srcH) {
+        origin.draw(x, y, origin.getWidth(), origin.getHeight(), this.x + srcX, this.y + srcY, srcW, srcH);
+    }
+
+    @Override
+    public int getWidth() {
+        return w;
+    }
+
+    @Override
+    public int getHeight() {
+        return h;
+    }
+
+    @Override
+    public Image convertAwtImage() {
+        return null;
+    }
+}
+
+public class Texture extends Displayable {
+    private int id;
     private final int width;
     private final int height;
-    private final BufferedImage awtBufferedImage;
+    private BufferedImage awtBufferedImage;
+    public final boolean isOriginal;
 
-
+    protected Texture(int width, int height) {
+        this.width = width;
+        this.height = height;
+        this.isOriginal = false;
+    }
 
     protected Texture(ByteBuffer buffer, int width, int height, BufferedImage awtBufferedImage) {
         id = glGenTextures();
         this.width = width;
         this.height = height;
+        this.isOriginal = true;
 
         glBindTexture(GL_TEXTURE_2D, id);
 
@@ -69,6 +129,16 @@ public final class Texture extends Displayable {
         }
 
         return texture;
+    }
+
+    public Texture getSubTexture(int x, int y, int w, int h) {
+        if (w == -1)
+            w = getWidth() - x;
+        if (h == -1)
+            h = getHeight() - y;
+        w = Math.max(0, Math.min(w, getWidth() - x));
+        h = Math.max(0, Math.min(h, getHeight() - y));
+        return new SubTexture(this, x, y, w, h);
     }
 
     public void bind() {

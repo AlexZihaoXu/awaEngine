@@ -14,7 +14,11 @@ public abstract class Displayable extends Core implements Drawable {
 
     abstract protected void unbind();
 
-    protected static void draw(float x, float y, float w, float h) {
+    protected void draw(float x, float y, float w, float h) {
+        draw(x, y, w, h, 0, 0, w, h);
+    }
+
+    protected void draw(float x, float y, float w, float h, float srcX, float srcY, float srcW, float srcH) {
 
         glColor4f(1, 1, 1, 1);
         glEnable(GL_BLEND);
@@ -22,17 +26,30 @@ public abstract class Displayable extends Core implements Drawable {
         glEnable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
 
-        glTexCoord2f(0, 0);
+        if (srcW == -1) {
+            srcW = w - srcX;
+        }
+        if (srcH == -1) {
+            srcH = h - srcY;
+        }
+
+        float texL = srcX / w;
+        float texR = (srcX + srcW) / w;
+        float texT = srcY / h;
+        float texB = (srcY + srcH) / h;
+
+        // 00, 10, 11, 01
+        glTexCoord2f(texL, texT);
         glVertex2f(x, y);
 
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
+        glTexCoord2f(texR, texT);
+        glVertex2f(x + srcW, y);
 
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
+        glTexCoord2f(texR, texB);
+        glVertex2f(x + srcW, y + srcH);
 
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        glTexCoord2f(texL, texB);
+        glVertex2f(x, y + srcH);
 
         glEnd();
         glDisable(GL_TEXTURE_2D);

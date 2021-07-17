@@ -12,7 +12,6 @@ import static org.lwjgl.opengl.GL11.glBindTexture;
 
 public class Font extends Core {
     private final HashMap<Integer, UnicodeFont> sizeMap = new HashMap<>();
-    private final HashMap<Integer, ColorEffect> colorMap = new HashMap<>();
     private final java.awt.Font awtFont;
     private static Font defaultFont = null;
 
@@ -30,35 +29,32 @@ public class Font extends Core {
         return new Font(awtFont);
     }
 
-    protected UnicodeFont getUnicodeFont(float size, Color color) {
+    protected UnicodeFont getUnicodeFont(float size) {
         int index = (int) ((int) (size * Settings.Video.fontResolution) / Settings.Video.fontResolution);
         if (!sizeMap.containsKey(index)) {
             try {
-
                 UnicodeFont font = new UnicodeFont(awtFont.deriveFont(java.awt.Font.PLAIN, index));
                 font.addAsciiGlyphs();
-                ColorEffect effect = new ColorEffect();
-                if (color != null)
-                    effect.setColor(new java.awt.Color(color.r, color.g, color.b, color.a));
-
                 //noinspection unchecked
-                font.getEffects().add(effect);
-                colorMap.put(index, effect);
+                font.getEffects().add(new ColorEffect());
                 font.loadGlyphs();
                 sizeMap.put(index, font);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
         }
-        if (color != null)
-            colorMap.get(index).setColor(new java.awt.Color(color.r, color.g, color.b, color.a));
         return sizeMap.get(index);
     }
 
     protected void render(String text, float x, float y, float size, Color color) {
-        getUnicodeFont(size, color).drawString(x, y, text);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
+        try {
+            getUnicodeFont(size).drawString(x, y, text, new org.newdawn.slick.Color(color.r, color.g, color.b, color.a));
+            glBindTexture(GL_TEXTURE_2D, 0);
+        } catch (NullPointerException e) {
+            System.err.println("Unable to create font");
+            throw e;
+        }
     }
 
 }
