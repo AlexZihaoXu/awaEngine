@@ -1,8 +1,11 @@
 package site.alex_xu.dev.frameworks.awaengine.video;
 
 import org.lwjgl.LWJGLException;
+import org.lwjgl.openal.AL;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import site.alex_xu.dev.frameworks.awaengine.audio.Audio;
+import site.alex_xu.dev.frameworks.awaengine.audio.SoundSource;
 import site.alex_xu.dev.frameworks.awaengine.controls.Keyboard;
 import site.alex_xu.dev.frameworks.awaengine.controls.Mouse;
 import site.alex_xu.dev.frameworks.awaengine.core.Loader;
@@ -113,6 +116,22 @@ public abstract class Window extends Renderable {
     private static class KeyboardEventHandler extends Keyboard {
         public static void handle() {
             _internalKeyboardEvents();
+        }
+    }
+
+    private static class AudioManager extends Audio {
+        protected AudioManager(int buffer) {
+            super(buffer);
+        }
+
+        public static void performCleanUp() {
+            cleanUp();
+        }
+    }
+
+    private static class SoundSourceManager extends SoundSource {
+        public static void performCleanUp() {
+            cleanUp();
         }
     }
 
@@ -310,6 +329,13 @@ public abstract class Window extends Renderable {
         }
 
         try {
+            AL.create();
+            Audio.setListenerPos(0, 0, 0);
+        } catch (LWJGLException e) {
+            e.printStackTrace();
+        }
+
+        try {
             setup();
             Clock deltaClock = new Clock();
             while (!Display.isCloseRequested()) {
@@ -333,6 +359,9 @@ public abstract class Window extends Renderable {
             e.printStackTrace();
         } finally {
             destroy();
+            SoundSourceManager.performCleanUp();
+            AudioManager.performCleanUp();
+            AL.destroy();
         }
 
     }

@@ -61,6 +61,7 @@ public final class BufferedTexture extends Renderable {
     }
 
     public void free() {
+        System.out.println("Finalized " + getWidth() + getHeight());
         if (deleted) return;
         deleted = true;
         glDeleteFramebuffers(fboID);
@@ -129,8 +130,8 @@ public final class BufferedTexture extends Renderable {
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
         free();
+        super.finalize();
     }
 
     @Override
