@@ -2,6 +2,7 @@ package site.alex_xu.dev.frameworks.awaengine.graphics;
 
 import org.lwjgl.BufferUtils;
 import site.alex_xu.dev.frameworks.awaengine.core.Loader;
+import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -74,6 +75,7 @@ public class Texture extends Displayable {
     private final int height;
     private BufferedImage awtBufferedImage;
     public final boolean isOriginal;
+    private boolean deleted = false;
 
     protected Texture(int width, int height) {
         this.width = width;
@@ -95,6 +97,16 @@ public class Texture extends Displayable {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this.width, this.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
         this.awtBufferedImage = awtBufferedImage;
+    }
+
+    public void free() {
+        if (deleted) return;
+        deleted = true;
+        glDeleteTextures(id);
+    }
+
+    public BufferedTexture createBufferedTexture() {
+        return new BufferedTexture(this);
     }
 
     public static Texture fromFile(String path) {
@@ -142,6 +154,8 @@ public class Texture extends Displayable {
     }
 
     public void bind() {
+        if (deleted)
+            throw new TextureException("Trying to access a texture that has already been freed. ");
         glBindTexture(GL_TEXTURE_2D, id);
     }
 
@@ -156,7 +170,7 @@ public class Texture extends Displayable {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        glDeleteTextures(id);
+        free();
     }
 
     @Override

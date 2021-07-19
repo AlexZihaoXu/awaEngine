@@ -1,6 +1,6 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
-import org.lwjgl.BufferUtils;
+import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 import site.alex_xu.dev.utils.Size2i;
 
 import java.awt.*;
@@ -13,8 +13,14 @@ public final class BufferedTexture extends Renderable {
     private final int fboID;
     private final int texID;
     private final int depthBuff;
+    private boolean deleted = false;
 
     private final Size2i size;
+
+    public BufferedTexture(Texture texture) {
+        this(texture.getWidth(), texture.getHeight());
+        blit(0, 0, texture);
+    }
 
     public BufferedTexture(int width, int height) {
         fboID = glGenFramebuffers();
@@ -40,7 +46,32 @@ public final class BufferedTexture extends Renderable {
         size = new Size2i(width, height);
     }
 
+    public BufferedTexture getSubTexture(int x, int y, int w, int h) {
+        if (w == -1)
+            w = getWidth() - x;
+        if (h == -1)
+            h = getHeight() - y;
+        w = Math.max(0, Math.min(w, getWidth() - x));
+        h = Math.max(0, Math.min(h, getHeight() - y));
+        BufferedTexture result = new BufferedTexture(w, h);
+        result.clear(0, 0, 0, 0);
+
+        result.blit(0, 0, this, x, y, w, h);
+        return result;
+    }
+
+    public void free() {
+        if (deleted) return;
+        deleted = true;
+        glDeleteFramebuffers(fboID);
+        glDeleteTextures(texID);
+        glDeleteRenderbuffers(depthBuff);
+    }
+
     private void enableEditing() {
+        if (deleted)
+            throw new TextureException("Trying to edit a buffered texture that has already been freed. ");
+
         glPushMatrix();
         glDisable(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, fboID);
@@ -70,6 +101,8 @@ public final class BufferedTexture extends Renderable {
 
     @Override
     protected void bind() {
+        if (deleted)
+            throw new TextureException("Trying to access a texture that has already been freed. ");
         glBindTexture(GL_TEXTURE_2D, texID);
     }
 
@@ -97,9 +130,7 @@ public final class BufferedTexture extends Renderable {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        glDeleteFramebuffers(fboID);
-        glDeleteTextures(texID);
-        glDeleteRenderbuffers(depthBuff);
+        free();
     }
 
     @Override

@@ -85,17 +85,20 @@ public abstract class Renderable extends Displayable {
 
     public void rect(float x, float y, float w, float h) {
         _beginRender();
-        fillColor.glSetColor();
         glEnable(GL_LINE_SMOOTH);
-        glLineWidth(strokeWeight);
-        glBegin(GL_QUADS);
 
-        glVertex2f(x, y);
-        glVertex2f(x + w, y);
-        glVertex2f(x + w, y + h);
-        glVertex2f(x, y + h);
+        if (fillColor.visible()) {
+            fillColor.glSetColor();
+            glLineWidth(strokeWeight);
+            glBegin(GL_QUADS);
 
-        glEnd();
+            glVertex2f(x, y);
+            glVertex2f(x + w, y);
+            glVertex2f(x + w, y + h);
+            glVertex2f(x, y + h);
+
+            glEnd();
+        }
 
         if (strokeColor.visible()) {
             strokeColor.glSetColor();
@@ -111,22 +114,25 @@ public abstract class Renderable extends Displayable {
     }
 
     public void circle(float x, float y, float radius, int pointCount) {
-        _beginRender();
-        glLineWidth(strokeWeight);
-        glEnable(GL_LINE_SMOOTH);
-        fillColor.glSetColor();
 
-        glBegin(GL_POLYGON);
+        if (fillColor.visible()) {
+            _beginRender();
+            glEnable(GL_LINE_SMOOTH);
+            fillColor.glSetColor();
 
-        for (int i = 0; i < pointCount; i++) {
-            float cx = FastMath.cos(360f * i / pointCount) * radius + x;
-            float cy = FastMath.sin(360f * i / pointCount) * radius + y;
-            glVertex2f(cx, cy);
+            glBegin(GL_POLYGON);
+
+            for (int i = 0; i < pointCount; i++) {
+                float cx = FastMath.cos(360f * i / pointCount) * radius + x;
+                float cy = FastMath.sin(360f * i / pointCount) * radius + y;
+                glVertex2f(cx, cy);
+            }
+
+            glEnd();
         }
 
-        glEnd();
-
-        if (strokeColor.visible()) {
+        if (strokeColor.visible() && strokeWeight > 0) {
+            glLineWidth(strokeWeight);
             strokeColor.glSetColor();
 
             glBegin(GL_LINE_LOOP);
@@ -144,13 +150,15 @@ public abstract class Renderable extends Displayable {
     }
 
     public void line(float x1, float y1, float x2, float y2) {
-        strokeColor.glSetColor();
-        glEnable(GL_LINE_SMOOTH);
-        glLineWidth(strokeWeight);
-        glBegin(GL_LINES);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glEnd();
+        if (strokeColor.visible() && strokeWeight > 0) {
+            strokeColor.glSetColor();
+            glEnable(GL_LINE_SMOOTH);
+            glLineWidth(strokeWeight);
+            glBegin(GL_LINES);
+            glVertex2f(x1, y1);
+            glVertex2f(x2, y2);
+            glEnd();
+        }
     }
 
     public void polygon(float[] poses) {
@@ -173,6 +181,8 @@ public abstract class Renderable extends Displayable {
     }
 
     public void text(float x, float y, String text) {
+        if (text.isEmpty())
+            return;
         glPushMatrix();
         float trueSize = fontSize * Settings.Video.fontResolution;
         float additionalScale = 1 + (trueSize - (int) trueSize) / (int) trueSize;
@@ -182,6 +192,8 @@ public abstract class Renderable extends Displayable {
     }
 
     public void blit(float x, float y, Displayable displayable) {
+        if (displayable == null)
+            return;
         _beginRender();
         displayable.bind();
         displayable.draw(x, y, displayable.getWidth(), displayable.getHeight());
@@ -189,6 +201,8 @@ public abstract class Renderable extends Displayable {
     }
 
     public void blit(float x, float y, Displayable displayable, float srcX, float srcY, float srcW, float srcH) {
+        if (displayable == null)
+            return;
         _beginRender();
         displayable.bind();
         displayable.draw(x, y, displayable.getWidth(), displayable.getHeight(), srcX, srcY, srcW, srcH);

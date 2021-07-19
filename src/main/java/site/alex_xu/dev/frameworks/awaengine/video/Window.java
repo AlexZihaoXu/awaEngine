@@ -201,6 +201,14 @@ public abstract class Window extends Renderable {
         Display.setVSyncEnabled(enabled);
     }
 
+    public void setPosition(float x, float y) {
+        Display.setLocation((int) x, (int) y);
+    }
+
+    public Vec2D getPosition() {
+        return new Vec2D(Display.getX(), Display.getY());
+    }
+
     public boolean isResizable() {
         return Display.isResizable();
     }
