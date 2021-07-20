@@ -1,5 +1,7 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 import site.alex_xu.dev.utils.Size2i;
 
@@ -61,7 +63,6 @@ public final class BufferedTexture extends Renderable {
     }
 
     public void free() {
-        System.out.println("Finalized " + getWidth() + getHeight());
         if (deleted) return;
         deleted = true;
         glDeleteFramebuffers(fboID);
@@ -85,9 +86,9 @@ public final class BufferedTexture extends Renderable {
 
         glViewport(0, 0, getWidth(), getHeight());
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
         glEnable(GL_LINE_SMOOTH);
+        applyBlendMode();
     }
 
     @Override

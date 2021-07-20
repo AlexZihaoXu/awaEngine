@@ -1,34 +1,96 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import site.alex_xu.dev.frameworks.awaengine.core.Settings;
 import site.alex_xu.dev.utils.FastMath;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_SUBTRACT;
+import static org.lwjgl.opengl.GL14.*;
 
 public abstract class Renderable extends Displayable {
 
+    protected static Renderable renderingSlot = null;
+    // Blend Funcs
+    protected final int BLEND_ADD = GL_ADD;
+    protected final int BLEND_SUBTRACT = GL_SUBTRACT;
+    protected final int BLEND_MULT = GL_MULT;
+    protected final int BLEND_MIN = GL_MIN;
+    protected final int BLEND_MAX = GL_MAX;
+    // Blend Factors
+    protected final int BLEND_ZERO = GL_ZERO;
+    protected final int BLEND_ONE = GL_ONE;
+    protected final int BLEND_SRC_COLOR = GL_SRC_COLOR;
+    protected final int BLEND_ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR;
+    protected final int BLEND_DST_COLOR = GL_DST_COLOR;
+    protected final int BLEND_ONE_MINUS_DST_COLOR = GL_ONE_MINUS_DST_COLOR;
+    protected final int BLEND_SRC_ALPHA = GL_SRC_ALPHA;
+    protected final int BLEND_ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA;
+    protected final int BLEND_DST_ALPHA = GL_DST_ALPHA;
+    protected final int BLEND_ONE_MINUS_DST_ALPHA = GL_ONE_MINUS_DST_ALPHA;
+    protected final int BLEND_CONSTANT_COLOR = GL_CONSTANT_COLOR;
+    protected final int BLEND_ONE_MINUS_CONSTANT_COLOR = GL_ONE_MINUS_CONSTANT_COLOR;
+    protected final int BLEND_CONSTANT_ALPHA = GL_CONSTANT_ALPHA;
+    protected final int BLEND_ONE_MINUS_CONSTANT_ALPHA = GL_ONE_MINUS_CONSTANT_ALPHA;
     private final Color fillColor = new Color(255);
     private final Color strokeColor = new Color(0);
+    private final Color blendColor = new Color(0, 0, 0, 0);
+    // Defaults
+    protected int defaultBlendEquation = BLEND_ADD;
+    protected int defaultSrcFactor = BLEND_SRC_ALPHA;
+    protected int defaultDstFactor = BLEND_ONE_MINUS_SRC_ALPHA;
+    protected int blendEquation = defaultBlendEquation;
+    protected int srcFactor = defaultSrcFactor;
+    protected int dstFactor = defaultDstFactor;
     private float strokeWeight = 1f;
-    protected static Renderable renderingSlot = null;
     private Font font = Font.getDefaultFont();
     private float fontSize = 24f;
 
     abstract protected void prepare();
 
-    protected void _beginRender() {
+    public void blendReset() {
+        blendEquation = defaultBlendEquation;
+        srcFactor = defaultSrcFactor;
+        dstFactor = defaultDstFactor;
+        blendColor.set(0, 0, 0, 0);
+    }
+
+    public void blendColor(float r, float g, float b, float a) {
+        blendColor.set(r, g, b, a);
+    }
+
+    public void blendEquation(int blendEquation) {
+        bindContext();
+        this.blendEquation = blendEquation;
+    }
+
+    public void blendFactors(int srcFactor, int dstFactor) {
+        bindContext();
+        this.srcFactor = srcFactor;
+        this.dstFactor = dstFactor;
+    }
+
+    protected void applyBlendMode() {
+        GL11.glBlendFunc(srcFactor, dstFactor);
+        GL14.glBlendEquation(blendEquation);
+        glBlendColor(blendColor.r / 255f, blendColor.g / 255f, blendColor.b / 255f, blendColor.a / 255f);
+    }
+
+    public void bindContext() {
         if (renderingSlot != this) {
             if (renderingSlot != null) {
-                renderingSlot._endRender();
+                renderingSlot.unbindContext();
                 renderingSlot = null;
             }
             renderingSlot = this;
 
             beginRender();
         }
+        applyBlendMode();
     }
 
-    protected void _endRender() {
+    public void unbindContext() {
         endRender();
     }
 
@@ -78,13 +140,13 @@ public abstract class Renderable extends Displayable {
 
     // Basic Draws
     public void clear(float r, float g, float b, float a) {
-        _beginRender();
+        bindContext();
         glClearColor(Math.max(0, Math.min(r, 255)) / 255f, Math.max(0, Math.min(g, 255)) / 255f, Math.max(0, Math.min(b, 255)) / 255f, Math.max(0, Math.min(a, 255)) / 255f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
     public void rect(float x, float y, float w, float h) {
-        _beginRender();
+        bindContext();
         glEnable(GL_LINE_SMOOTH);
 
         if (fillColor.visible()) {
@@ -116,7 +178,7 @@ public abstract class Renderable extends Displayable {
     public void circle(float x, float y, float radius, int pointCount) {
 
         if (fillColor.visible()) {
-            _beginRender();
+            bindContext();
             glEnable(GL_LINE_SMOOTH);
             fillColor.glSetColor();
 
@@ -162,7 +224,7 @@ public abstract class Renderable extends Displayable {
     }
 
     public void polygon(float[] poses) {
-        _beginRender();
+        bindContext();
         glEnable(GL_LINE_SMOOTH);
         glLineWidth(strokeWeight);
         fillColor.glSetColor();
@@ -194,16 +256,22 @@ public abstract class Renderable extends Displayable {
     public void blit(float x, float y, Displayable displayable) {
         if (displayable == null)
             return;
-        _beginRender();
+        bindContext();
         displayable.bind();
         displayable.draw(x, y, displayable.getWidth(), displayable.getHeight());
         displayable.unbind();
     }
 
+    public void blit(RenderNode node) {
+        if (node == null)
+            return;
+        node.drawTo(this);
+    }
+
     public void blit(float x, float y, Displayable displayable, float srcX, float srcY, float srcW, float srcH) {
         if (displayable == null)
             return;
-        _beginRender();
+        bindContext();
         displayable.bind();
         displayable.draw(x, y, displayable.getWidth(), displayable.getHeight(), srcX, srcY, srcW, srcH);
         displayable.unbind();
@@ -211,27 +279,27 @@ public abstract class Renderable extends Displayable {
 
     // Transform
     public void translate(float x, float y) {
-        _beginRender();
+        bindContext();
         glTranslatef(x, y, 0);
     }
 
     public void scale(float x, float y) {
-        _beginRender();
+        bindContext();
         glScalef(x, y, 1);
     }
 
     public void rotate(float angle) {
-        _beginRender();
+        bindContext();
         glRotatef(angle, 0, 0, 1);
     }
 
     public void pushMatrix() {
-        _beginRender();
+        bindContext();
         glPushMatrix();
     }
 
     public void popMatrix() {
-        _beginRender();
+        bindContext();
         glPopMatrix();
     }
 

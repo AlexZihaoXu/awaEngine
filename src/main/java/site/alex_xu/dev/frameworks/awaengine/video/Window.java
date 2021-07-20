@@ -4,6 +4,8 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import site.alex_xu.dev.frameworks.awaengine.audio.Audio;
 import site.alex_xu.dev.frameworks.awaengine.audio.SoundSource;
 import site.alex_xu.dev.frameworks.awaengine.controls.Keyboard;
@@ -296,7 +298,7 @@ public abstract class Window extends Renderable {
         glViewport(0, 0, getWidth(), getHeight());
         glDisable(GL_DEPTH_TEST);
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        applyBlendMode();
         glEnable(GL_BLEND);
         glEnable(GL_LINE_SMOOTH);
     }

@@ -24,21 +24,21 @@ public abstract class RenderNode extends Renderable {
 
     abstract protected void draw();
 
-    public void drawTo(Renderable renderable) {
-        renderable.pushMatrix();
-        renderable.translate(position.x, position.y);
-        renderable.rotate(rotation);
-        renderable.scale(scale.x, scale.y);
-        renderable.translate(-origin.x, -origin.y);
-
+    protected void drawTo(Renderable renderable) {
         boundRenderable = renderable;
+        pushMatrix();
+        translate(position.x, position.y);
+        rotate(rotation);
+        scale(scale.x, scale.y);
+        translate(-origin.x, -origin.y);
+
         draw();
-        renderable.translate(origin.x, origin.y);
+        translate(origin.x, origin.y);
         for (RenderNode node : childrenNodes) {
             node.drawTo(renderable);
         }
 
-        renderable.popMatrix();
+        popMatrix();
     }
 
     @Override

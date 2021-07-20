@@ -21,8 +21,6 @@ public abstract class Displayable extends Core implements Drawable {
     protected void draw(float x, float y, float w, float h, float srcX, float srcY, float srcW, float srcH) {
 
         glColor4f(1, 1, 1, 1);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
 
