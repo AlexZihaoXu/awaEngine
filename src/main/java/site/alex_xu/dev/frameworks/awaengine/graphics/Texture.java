@@ -1,7 +1,7 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
 import org.lwjgl.BufferUtils;
-import site.alex_xu.dev.frameworks.awaengine.core.Loader;
+import site.alex_xu.dev.frameworks.awaengine.core.BaseLoader;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 
 import javax.imageio.ImageIO;
@@ -69,12 +69,13 @@ class SubTexture extends Texture {
     }
 }
 
-public class Texture extends Displayable {
-    private int id;
+public class Texture extends Displayable implements TextureType {
+    public final boolean isOriginal;
     private final int width;
     private final int height;
+    private int id;
     private BufferedImage awtBufferedImage;
-    public final boolean isOriginal;
+    private Image convertedImage = null;
     private boolean deleted = false;
 
     protected Texture(int width, int height) {
@@ -99,18 +100,8 @@ public class Texture extends Displayable {
         this.awtBufferedImage = awtBufferedImage;
     }
 
-    public void free() {
-        if (deleted) return;
-        deleted = true;
-        glDeleteTextures(id);
-    }
-
-    public BufferedTexture createBufferedTexture() {
-        return new BufferedTexture(this);
-    }
-
     public static Texture fromFile(String path) {
-        return fromStream(Loader.getFileStream(path));
+        return fromStream(BaseLoader.getFileStream(path));
     }
 
     public static Texture fromStream(InputStream stream) {
@@ -143,6 +134,20 @@ public class Texture extends Displayable {
         return texture;
     }
 
+    public static Texture fromResources(String path) {
+        return fromStream(BaseLoader.getResourceAsStream(path));
+    }
+
+    public void free() {
+        if (deleted) return;
+        deleted = true;
+        glDeleteTextures(id);
+    }
+
+    public BufferedTexture createBufferedTexture() {
+        return new BufferedTexture(this);
+    }
+
     public Texture getSubTexture(int x, int y, int w, int h) {
         if (w == -1)
             w = getWidth() - x;
@@ -163,10 +168,6 @@ public class Texture extends Displayable {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    public static Texture fromResources(String path) {
-        return fromStream(Loader.getResourceAsStream(path));
-    }
-
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -185,9 +186,12 @@ public class Texture extends Displayable {
 
     @Override
     public Image convertAwtImage() {
-        ColorModel cm = awtBufferedImage.getColorModel();
-        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        WritableRaster raster = awtBufferedImage.copyData(awtBufferedImage.getRaster().createCompatibleWritableRaster());
-        return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+        if (convertedImage == null) {
+            ColorModel cm = awtBufferedImage.getColorModel();
+            boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+            WritableRaster raster = awtBufferedImage.copyData(awtBufferedImage.getRaster().createCompatibleWritableRaster());
+            convertedImage = new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+        }
+        return convertedImage;
     }
 }

@@ -1,26 +1,27 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
+import org.lwjgl.BufferUtils;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 import site.alex_xu.dev.utils.Size2i;
 
+import java.awt.Color;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
 
-public final class BufferedTexture extends Renderable {
+public final class BufferedTexture extends Renderable implements TextureType {
     private final int fboID;
     private final int texID;
     private final int depthBuff;
-    private boolean deleted = false;
-
     private final Size2i size;
+    private boolean deleted = false;
 
     public BufferedTexture(Texture texture) {
         this(texture.getWidth(), texture.getHeight());
+        clear(0, 0, 0, 0);
         blit(0, 0, texture);
     }
 
@@ -123,11 +124,6 @@ public final class BufferedTexture extends Renderable {
         return size.height;
     }
 
-    @Override
-    public Image convertAwtImage() {
-        return null;
-    }
-
 
     @Override
     protected void finalize() throws Throwable {
@@ -143,5 +139,13 @@ public final class BufferedTexture extends Renderable {
     @Override
     protected void endRender() {
         disableEditing();
+    }
+
+    @Override
+    public Image convertAwtImage() {
+        glBindFramebuffer(GL_FRAMEBUFFER, fboID);
+        Image result = super.convertAwtImage();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return result;
     }
 }

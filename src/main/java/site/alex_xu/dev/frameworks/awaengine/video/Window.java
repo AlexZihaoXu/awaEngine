@@ -4,24 +4,28 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL14;
+import org.newdawn.slick.opengl.ImageIOImageData;
 import site.alex_xu.dev.frameworks.awaengine.audio.Audio;
 import site.alex_xu.dev.frameworks.awaengine.audio.SoundSource;
 import site.alex_xu.dev.frameworks.awaengine.controls.Keyboard;
 import site.alex_xu.dev.frameworks.awaengine.controls.Mouse;
-import site.alex_xu.dev.frameworks.awaengine.core.Loader;
+import site.alex_xu.dev.frameworks.awaengine.core.BaseLoader;
 import site.alex_xu.dev.frameworks.awaengine.core.Settings;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateWindowCreationException;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateWindowLaunchException;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
+import site.alex_xu.dev.frameworks.awaengine.graphics.TextureType;
+import site.alex_xu.dev.frameworks.awaengine.scene.Scene;
 import site.alex_xu.dev.utils.Clock;
 import site.alex_xu.dev.utils.Size2i;
 import site.alex_xu.dev.utils.Vec2D;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.util.LinkedList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -47,7 +51,7 @@ class NativesManager {
             //noinspection ResultOfMethodCallIgnored
             destDir.mkdir();
         }
-        InputStream stream = Loader.getResourceAsStream(zipFilePath);
+        InputStream stream = BaseLoader.getResourceAsStream(zipFilePath);
         ZipInputStream zipIn = new ZipInputStream(stream);
         ZipEntry entry = zipIn.getNextEntry();
         // iterates over entries in the zip file
@@ -103,59 +107,20 @@ class NativesManager {
 
 public abstract class Window extends Renderable {
     private static Window instance;
-    private boolean s_vSyncEnabled;
     private static boolean _logged = false;
+    private final LinkedList<Float> fpsQueue = new LinkedList<>();
+    private final LinkedList<Float> fpsAddedTimeQueue = new LinkedList<>();
+    private final LinkedList<Float> tpsQueue = new LinkedList<>();
+    private final LinkedList<Float> tpsAddedTimeQueue = new LinkedList<>();
+    private boolean s_vSyncEnabled;
     private boolean launched = false;
     private Size2i previousSize;
     private Vec2D previousPos;
-
-    private static class MouseEventHandler extends Mouse {
-        public static void handle() {
-            _internalMouseEvents();
-        }
-    }
-
-    private static class KeyboardEventHandler extends Keyboard {
-        public static void handle() {
-            _internalKeyboardEvents();
-        }
-    }
-
-    private static class AudioManager extends Audio {
-        protected AudioManager(int buffer) {
-            super(buffer);
-        }
-
-        public static void performCleanUp() {
-            cleanUp();
-        }
-    }
-
-    private static class SoundSourceManager extends SoundSource {
-        public static void performCleanUp() {
-            cleanUp();
-        }
-    }
-
-    @Override
-    protected void bind() {
-
-    }
-
-    @Override
-    protected void unbind() {
-
-    }
-
-    @Override
-    protected void beginRender() {
-        prepare();
-    }
-
-    @Override
-    protected void endRender() {
-
-    }
+    private Scene scene;
+    private float fpsSum = 0;
+    private float lastFpsRangeCheck = 0;
+    private float tpsSum = 0;
+    private float lastTpsRangeCheck = 0;
 
     public Window(String title, int width, int height, boolean vSyncEnabled, boolean resizable) {
 
@@ -205,6 +170,45 @@ public abstract class Window extends Renderable {
         this("awaEngine");
     }
 
+    public static Window getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("No window has been created yet!");
+        }
+        return instance;
+    }
+
+    public Scene getScene() {
+        return scene;
+    }
+
+    public void setScene(Scene scene) {
+        if (this.scene != null)
+            this.scene.destroy();
+        if (scene != null)
+            scene.setup();
+        this.scene = scene;
+    }
+
+    @Override
+    protected void bind() {
+
+    }
+
+    @Override
+    protected void unbind() {
+
+    }
+
+    @Override
+    protected void beginRender() {
+        prepare();
+    }
+
+    @Override
+    protected void endRender() {
+
+    }
+
     public int getWidth() {
         return Display.getWidth();
     }
@@ -218,8 +222,14 @@ public abstract class Window extends Renderable {
     }
 
     public void setVSyncEnabled(boolean enabled) {
-        s_vSyncEnabled = enabled;
-        Display.setVSyncEnabled(enabled);
+        if (enabled != s_vSyncEnabled) {
+            s_vSyncEnabled = enabled;
+            Display.setVSyncEnabled(enabled);
+        }
+    }
+
+    public boolean isFocused() {
+        return Display.isActive();
     }
 
     public void setPosition(float x, float y) {
@@ -246,6 +256,21 @@ public abstract class Window extends Renderable {
         Display.setTitle(title);
     }
 
+    public void setIcon(TextureType texture) {
+        try {
+            Display.setIcon(
+                    new ByteBuffer[]{
+                            new ImageIOImageData().imageToByteBuffer((BufferedImage) texture.convertAwtImage(), false, false, null)
+                    }
+            );
+        } catch (NullPointerException ignored) {
+        }
+    }
+
+    public boolean isFullscreen() {
+        return Display.isFullscreen();
+    }
+
     public void setFullscreen(boolean fullscreen) {
         if (fullscreen == isFullscreen())
             return;
@@ -264,21 +289,6 @@ public abstract class Window extends Renderable {
         }
     }
 
-    public boolean isFullscreen() {
-        return Display.isFullscreen();
-    }
-
-    @Override
-    public Image convertAwtImage() {
-        return null;
-    }
-
-    public static Window getInstance() {
-        if (instance == null) {
-            throw new IllegalStateException("No window has been created yet!");
-        }
-        return instance;
-    }
 
     abstract public void setup();
 
@@ -314,6 +324,67 @@ public abstract class Window extends Renderable {
         MouseEventHandler.handle();
     }
 
+    private void calculateVideoStatistics() {
+        if (Video.fps > 25565)
+            return;
+
+        fpsSum += Video.fps;
+        fpsQueue.addLast(Video.fps);
+        fpsAddedTimeQueue.addLast(Time.now);
+        while (Time.now - fpsAddedTimeQueue.getFirst() >= 1f) {
+            fpsSum -= fpsQueue.getFirst();
+            fpsAddedTimeQueue.removeFirst();
+            fpsQueue.removeFirst();
+        }
+        Video.fpsAvg = fpsSum / fpsQueue.size();
+
+        if (Time.now - lastFpsRangeCheck >= 0.1f) {
+            fpsSum = 0;
+            Video.fpsMin = fpsQueue.getFirst();
+            Video.fpsMax = fpsQueue.getFirst();
+
+            for (float fps : fpsQueue) {
+                if (fps > Video.fpsMax)
+                    Video.fpsMax = fps;
+                if (fps < Video.fpsMin)
+                    Video.fpsMin = fps;
+                fpsSum += fps;
+                lastFpsRangeCheck = Time.now;
+            }
+        }
+    }
+
+    private void calculateUpdateStatistics() {
+        if (Time.tps > 25565)
+            return;
+
+        tpsSum += Time.tps;
+        tpsQueue.addLast(Time.tps);
+        tpsAddedTimeQueue.addLast(Time.now);
+        while (Time.now - tpsAddedTimeQueue.getFirst() >= 1f) {
+            tpsSum -= tpsQueue.getFirst();
+            tpsAddedTimeQueue.removeFirst();
+            tpsQueue.removeFirst();
+        }
+        Time.tpsAvg = tpsSum / tpsQueue.size();
+
+        if (Time.now - lastTpsRangeCheck >= 0.1f) {
+            tpsSum = 0;
+            Time.tpsMin = tpsQueue.getFirst();
+            Time.tpsMax = tpsQueue.getFirst();
+
+            for (float tps : tpsQueue) {
+                if (tps > Time.tpsMax)
+                    Time.tpsMax = tps;
+                if (tps < Time.tpsMin)
+                    Time.tpsMin = tps;
+                tpsSum += tps;
+                lastTpsRangeCheck = Time.now;
+            }
+        }
+    }
+
+
     public void launch() {
 
         if (launched) {
@@ -339,13 +410,35 @@ public abstract class Window extends Renderable {
 
         try {
             setup();
+            Clock globalClock = new Clock(true);
             Clock deltaClock = new Clock();
+            Clock videoClock = new Clock();
             while (!Display.isCloseRequested()) {
+                Time.now = globalClock.getElapsedTime();
+
+                if (Settings.Update.reduceUpdatesWhenLostFocus && !Display.isActive()) {
+                    Thread.sleep((long) (1000 / Settings.Update.reducedTps));
+                }
+
                 Time.delta = deltaClock.getElapsedTime();
+                Time.safe_delta = Math.max(0, Math.min(Time.delta, 1 / 20f));
                 deltaClock.setNanoClock(Time.delta < 0.005f);
                 deltaClock.reset();
+                Time.tps = 1f / Time.delta;
+                calculateUpdateStatistics();
+                if (Time.delta <= 0) continue;
                 handleEvents();
                 update();
+                SceneManager.updateScene(scene);
+
+                if (Settings.Video.reduceFpsWhenLostFocus && !Display.isActive() && videoClock.getElapsedTime() < 1f / Settings.Video.reducedFps)
+                    continue;
+                if (videoClock.getElapsedTime() < 1f / Settings.Video.fpsLimit) continue;
+                Video.delta = videoClock.getElapsedTime();
+                videoClock.setNanoClock(Video.delta < 0.005f);
+                videoClock.reset();
+                Video.fps = 1f / Video.delta;
+                calculateVideoStatistics();
 
                 // Rendering
                 Display.makeCurrent();
@@ -353,6 +446,7 @@ public abstract class Window extends Renderable {
                 prepare();
 
                 draw();
+                SceneManager.drawScene(scene, this);
 
                 Display.update();
                 Display.processMessages();
@@ -366,5 +460,52 @@ public abstract class Window extends Renderable {
             AL.destroy();
         }
 
+    }
+
+    @Override
+    public Image convertAwtImage(boolean flipped) {
+        return super.convertAwtImage(!flipped);
+    }
+
+    private static class MouseEventHandler extends Mouse {
+        public static void handle() {
+            _internalMouseEvents();
+        }
+    }
+
+    private static class KeyboardEventHandler extends Keyboard {
+        public static void handle() {
+            _internalKeyboardEvents();
+        }
+    }
+
+    private static class AudioManager extends Audio {
+        protected AudioManager(int buffer) {
+            super(buffer);
+        }
+
+        public static void performCleanUp() {
+            cleanUp();
+        }
+    }
+
+    private static class SoundSourceManager extends SoundSource {
+        public static void performCleanUp() {
+            cleanUp();
+        }
+    }
+
+    private abstract static class SceneManager extends Scene {
+        public static void updateScene(Scene scene) {
+            if (scene != null) {
+                _updateInstance(scene);
+            }
+        }
+
+        public static void drawScene(Scene scene, Renderable renderable) {
+            if (scene != null) {
+                _drawScene(scene, renderable);
+            }
+        }
     }
 }

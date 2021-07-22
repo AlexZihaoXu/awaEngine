@@ -1,28 +1,44 @@
-package site.alex_xu.dev.frameworks.awaengine.graphics;
+package site.alex_xu.dev.frameworks.awaengine.scene;
 
-import site.alex_xu.dev.frameworks.awaengine.core.Core;
+import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.utils.Vec2D;
 
 import java.awt.*;
 import java.util.HashSet;
 
-public abstract class RenderNode extends Renderable {
+public class Node extends Renderable {
     public final Vec2D position = new Vec2D();
     public final Vec2D origin = new Vec2D();
     public final Vec2D scale = new Vec2D(1, 1);
+    private final HashSet<Node> childrenNodes = new HashSet<>();
     public float rotation = 0;
-    private final HashSet<RenderNode> childrenNodes = new HashSet<>();
     private Renderable boundRenderable = null;
 
-    public void attachChild(RenderNode node) {
+    protected static void instanceDrawTo(Node node, Renderable renderable) {
+        node.drawTo(renderable);
+    }
+
+    public void attachChild(Node node) {
         childrenNodes.add(node);
     }
 
-    public void detachChild(RenderNode node) {
+    public void detachChild(Node node) {
         childrenNodes.remove(node);
     }
 
-    abstract protected void draw();
+    public void update() {
+    }
+
+    public void draw() {
+
+    }
+
+    protected void updateTree() {
+        update();
+        for (Node node : childrenNodes) {
+            node.updateTree();
+        }
+    }
 
     protected void drawTo(Renderable renderable) {
         boundRenderable = renderable;
@@ -34,7 +50,7 @@ public abstract class RenderNode extends Renderable {
 
         draw();
         translate(origin.x, origin.y);
-        for (RenderNode node : childrenNodes) {
+        for (Node node : childrenNodes) {
             node.drawTo(renderable);
         }
 
@@ -43,12 +59,12 @@ public abstract class RenderNode extends Renderable {
 
     @Override
     protected void bind() {
-        boundRenderable.bind();
+        _instanceBind(boundRenderable);
     }
 
     @Override
     protected void unbind() {
-        boundRenderable.unbind();
+        _instanceUnbind(boundRenderable);
     }
 
     @Override
@@ -68,16 +84,16 @@ public abstract class RenderNode extends Renderable {
 
     @Override
     protected void prepare() {
-        boundRenderable.prepare();
+        _instancePrepare(boundRenderable);
     }
 
     @Override
     protected void beginRender() {
-        boundRenderable.beginRender();
+        _instanceBeginRender(boundRenderable);
     }
 
     @Override
     protected void endRender() {
-        boundRenderable.endRender();
+        _instanceEndRender(boundRenderable);
     }
 }

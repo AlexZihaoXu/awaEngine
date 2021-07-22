@@ -222,7 +222,7 @@ public class Keyboard extends Core {
     }
 
     public Keyboard() {
-        this(true);
+        this(false);
     }
 
     public void createListener() {

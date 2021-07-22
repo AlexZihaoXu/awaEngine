@@ -2,15 +2,16 @@ package site.alex_xu.dev.frameworks.awaengine.graphics;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import site.alex_xu.dev.frameworks.awaengine.scene.Node;
 import site.alex_xu.dev.frameworks.awaengine.core.Settings;
 import site.alex_xu.dev.utils.FastMath;
+import site.alex_xu.dev.utils.Vec2D;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_SUBTRACT;
 import static org.lwjgl.opengl.GL14.*;
 
 public abstract class Renderable extends Displayable {
-
     protected static Renderable renderingSlot = null;
     // Blend Funcs
     protected final int BLEND_ADD = GL_ADD;
@@ -46,6 +47,29 @@ public abstract class Renderable extends Displayable {
     private float strokeWeight = 1f;
     private Font font = Font.getDefaultFont();
     private float fontSize = 24f;
+
+    protected static void _instancePrepare(Renderable renderable) {
+        renderable.prepare();
+    }
+    protected static void _instanceBind(Renderable renderable) {
+        renderable.bind();
+    }
+    protected static void _instanceUnbind(Renderable renderable) {
+        renderable.unbind();
+    }
+    protected static void _instanceBeginRender(Renderable renderable) {
+        renderable.beginRender();
+    }
+    protected static void _instanceEndRender(Renderable renderable) {
+        renderable.endRender();
+    }
+
+    private static class NodeManager extends Node {
+        public static void drawNode(Node node, Renderable renderable) {
+            instanceDrawTo(node, renderable);
+        }
+    }
+
 
     abstract protected void prepare();
 
@@ -262,10 +286,10 @@ public abstract class Renderable extends Displayable {
         displayable.unbind();
     }
 
-    public void blit(RenderNode node) {
+    public void blit(Node node) {
         if (node == null)
             return;
-        node.drawTo(this);
+        NodeManager.drawNode(node, this);
     }
 
     public void blit(float x, float y, Displayable displayable, float srcX, float srcY, float srcW, float srcH) {

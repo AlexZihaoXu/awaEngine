@@ -46,9 +46,6 @@ public class Mouse extends Core {
             position.x = eventX;
             position.y = eventY;
 
-            if (eventDX != 0 || eventDY != 0) {  // motionEvent
-                _internalOnMotion(eventX, eventY, eventDX, eventDY);
-            }
             if (eventDWheel != 0) {
                 _internalOnWheel(eventDWheel / 120f);
             }
@@ -59,6 +56,9 @@ public class Mouse extends Core {
                 } else {
                     _internalOnRelease(eventX, eventY, eventButton);
                 }
+            }
+            if (eventDX != 0 || eventDY != 0) {  // motionEvent
+                _internalOnMotion(eventX, eventY, eventDX, eventDY);
             }
 
         }
