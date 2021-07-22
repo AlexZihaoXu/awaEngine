@@ -413,10 +413,12 @@ public abstract class Window extends Renderable {
             Clock globalClock = new Clock(true);
             Clock deltaClock = new Clock();
             Clock videoClock = new Clock();
+
             while (!Display.isCloseRequested()) {
                 Time.now = globalClock.getElapsedTime();
 
                 if (Settings.Update.reduceUpdatesWhenLostFocus && !Display.isActive()) {
+                    //noinspection BusyWait
                     Thread.sleep((long) (1000 / Settings.Update.reducedTps));
                 }
 
@@ -448,13 +450,14 @@ public abstract class Window extends Renderable {
                 draw();
                 SceneManager.drawScene(scene, this);
 
-                Display.update();
-                Display.processMessages();
+                Display.update(true);
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             destroy();
+            if (scene != null)
+                scene.destroy();
             SoundSourceManager.performCleanUp();
             AudioManager.performCleanUp();
             AL.destroy();

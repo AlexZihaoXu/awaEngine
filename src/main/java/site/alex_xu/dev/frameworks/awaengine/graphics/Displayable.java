@@ -76,7 +76,6 @@ public abstract class Displayable extends Core implements Drawable {
         BufferedImage result = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
         ByteBuffer buffer = BufferUtils.createByteBuffer(getWidth() * getHeight() * 4);
         glReadPixels(0, 0, getWidth(), getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-        System.out.println(this);
         for (int y = 0; y < getHeight(); y++) {
             for (int x = 0; x < getWidth(); x++) {
                 int ny = (flipped) ? getHeight() - y - 1 : y;
@@ -86,7 +85,6 @@ public abstract class Displayable extends Core implements Drawable {
                 int a = buffer.get(ny * getWidth() * 4 + x * 4 + 3) & 0xff;
 
                 result.setRGB(x, y, new Color(r, g, b, a).getRGB());
-
             }
         }
         unbind();
@@ -121,13 +119,9 @@ public abstract class Displayable extends Core implements Drawable {
             ImageIO.write(image, format, file);
 
         } catch (IOException e) {
-            try {
-                BufferedImage img2 = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-                img2.getGraphics().drawImage(image, 0, 0, null);
-                ImageIO.write(img2, format, file);
-            } catch (Exception e2) {
-                throw e2;
-            }
+            BufferedImage img2 = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+            img2.getGraphics().drawImage(image, 0, 0, null);
+            ImageIO.write(img2, format, file);
         }
         if (!file.exists())
             throw new IOException("Could not write image to: " + path);

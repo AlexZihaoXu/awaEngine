@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
+import static org.lwjgl.opengl.GL11.GL_NEAREST;
+
 public final class MasterLoader {
     private static class FontLoader extends Font {
         private static final HashMap<String, java.awt.Font> awtFonts = new HashMap<>();
@@ -35,16 +37,28 @@ public final class MasterLoader {
         private static final HashMap<String, Texture> loadedTextures = new HashMap<>();
         private static final HashMap<String, Font> loadedFonts = new HashMap<>();
 
-        public static Texture getTexture(String path) {
-            if (!loadedTextures.containsKey(path)) {
-                Texture texture = Texture.fromResources(path);
+        public static Texture getTexture(String path, int glTexMinFilter, int glTexMagFilter) {
+
+            String key = glTexMinFilter + "&" + glTexMagFilter + "|" + path;
+
+            if (!loadedTextures.containsKey(key)) {
+                Texture texture = Texture.fromStream(BaseLoader.getResourceAsStream(path), glTexMinFilter, glTexMagFilter);
                 if (texture != null)
-                    loadedTextures.put(path, texture);
+                    loadedTextures.put(key, texture);
                 else
                     throw new AssetNotFoundException("Could not load texture from resource: " + path);
             }
 
-            return loadedTextures.get(path);
+            return loadedTextures.get(key);
+        }
+
+
+        public static Texture getTexture(String path, int glTexFilters) {
+            return getTexture(path, glTexFilters, glTexFilters);
+        }
+
+        public static Texture getTexture(String path) {
+            return getTexture(path, GL_NEAREST);
         }
 
         public static Font getFont(String path) {
@@ -72,9 +86,9 @@ public final class MasterLoader {
         private static final HashMap<String, Texture> loadedTextures = new HashMap<>();
         private static final HashMap<String, Font> loadedFonts = new HashMap<>();
 
-        public static Texture getTexture(String path) {
+        public static Texture getTexture(String path, int glTexMinFilter, int glTexMagFilter) {
             if (!loadedTextures.containsKey(path)) {
-                Texture texture = Texture.fromFile(path);
+                Texture texture = Texture.fromStream(BaseLoader.getFileStream(path), glTexMinFilter, glTexMagFilter);
                 if (texture != null)
                     loadedTextures.put(path, texture);
                 else
@@ -82,6 +96,14 @@ public final class MasterLoader {
             }
 
             return loadedTextures.get(path);
+        }
+
+        public static Texture getTexture(String path, int glTexFilters) {
+            return getTexture(path, glTexFilters, glTexFilters);
+        }
+
+        public static Texture getTexture(String path) {
+            return getTexture(path, GL_NEAREST);
         }
 
         public static Font getFont(String path) {

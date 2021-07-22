@@ -1,20 +1,21 @@
 package site.alex_xu.dev.frameworks.awaengine.scene;
 
-import site.alex_xu.dev.frameworks.awaengine.core.Core;
+import site.alex_xu.dev.frameworks.awaengine.graphics.BaseRenderable;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.frameworks.awaengine.video.Window;
 import site.alex_xu.dev.utils.FastMath;
 import site.alex_xu.dev.utils.Vec2D;
 
-public abstract class Scene extends Core {
+import java.awt.*;
+
+public abstract class Scene extends Renderable {
     private final Camera camera = new Camera();
     private final Node rootNode = new Node();
     private final CamNode camNode = new CamNode(this);
-    private Renderable renderTarget;
+    private BaseRenderable renderTarget;
 
-    public Scene(Renderable renderTarget) {
+    public Scene(BaseRenderable renderTarget) {
         this.renderTarget = renderTarget;
-        camNode.attachChild(rootNode);
     }
 
     public Scene() {
@@ -31,7 +32,7 @@ public abstract class Scene extends Core {
     }
 
     protected static void _drawScene(Scene scene, Renderable target) {
-        scene.camNode.drawTo(target);
+        target.blit(scene.camNode);
         scene.drawUI();
     }
 
@@ -41,10 +42,6 @@ public abstract class Scene extends Core {
 
     public int getHeight() {
         return renderTarget.getHeight();
-    }
-
-    public Node getCamNode() {
-        return camNode;
     }
 
     public Node getRootNode() {
@@ -101,6 +98,44 @@ public abstract class Scene extends Core {
         @Override
         public void draw() {
             scene.draw();
+            scene.blit(scene.rootNode);
         }
+
+        @Override
+        public void update() {
+            super.update();
+            scene.rootNode.updateTree();
+        }
+    }
+
+
+    @Override
+    protected void bind() {
+        _instanceBind(renderTarget);
+    }
+
+    @Override
+    protected void unbind() {
+        _instanceUnbind(renderTarget);
+    }
+
+    @Override
+    public Image convertAwtImage() {
+        return renderTarget.convertAwtImage();
+    }
+
+    @Override
+    protected void prepare() {
+        _instancePrepare(renderTarget);
+    }
+
+    @Override
+    protected void beginRender() {
+        _instanceBeginRender(renderTarget);
+    }
+
+    @Override
+    protected void endRender() {
+        _instanceEndRender(renderTarget);
     }
 }

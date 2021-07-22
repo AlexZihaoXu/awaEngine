@@ -1,5 +1,7 @@
 package site.alex_xu.dev.frameworks.awaengine.scene;
 
+import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateAttachingNodeException;
+import site.alex_xu.dev.frameworks.awaengine.graphics.BaseRenderable;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.utils.Vec2D;
 
@@ -7,6 +9,7 @@ import java.awt.*;
 import java.util.HashSet;
 
 public class Node extends Renderable {
+    private boolean isAttached = false;
     public final Vec2D position = new Vec2D();
     public final Vec2D origin = new Vec2D();
     public final Vec2D scale = new Vec2D(1, 1);
@@ -19,11 +22,16 @@ public class Node extends Renderable {
     }
 
     public void attachChild(Node node) {
+        if (node.isAttached) {
+            throw new DuplicateAttachingNodeException("Each node can only be attached to one other node. ");
+        }
+        node.isAttached = true;
         childrenNodes.add(node);
     }
 
     public void detachChild(Node node) {
         childrenNodes.remove(node);
+        node.isAttached = false;
     }
 
     public void update() {

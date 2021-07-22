@@ -1,12 +1,9 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
-import org.lwjgl.BufferUtils;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 import site.alex_xu.dev.utils.Size2i;
 
-import java.awt.Color;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -25,15 +22,15 @@ public final class BufferedTexture extends Renderable implements TextureType {
         blit(0, 0, texture);
     }
 
-    public BufferedTexture(int width, int height) {
+    public BufferedTexture(int width, int height, int glTexMinFilter, int glTexMagFilter) {
         fboID = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
         texID = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glTexMinFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glTexMagFilter);
 
         depthBuff = glGenRenderbuffers();
         glBindRenderbuffer(GL_RENDERBUFFER, depthBuff);
@@ -47,6 +44,15 @@ public final class BufferedTexture extends Renderable implements TextureType {
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         size = new Size2i(width, height);
+        clear(0, 0, 0, 0);
+    }
+
+    public BufferedTexture(int width, int height, int glTexFilters) {
+        this(width, height, glTexFilters, glTexFilters);
+    }
+
+    public BufferedTexture(int width, int height) {
+        this(width, height, GL_NEAREST);
     }
 
     public BufferedTexture getSubTexture(int x, int y, int w, int h) {

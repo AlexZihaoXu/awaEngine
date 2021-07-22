@@ -84,7 +84,7 @@ public class Texture extends Displayable implements TextureType {
         this.isOriginal = false;
     }
 
-    protected Texture(ByteBuffer buffer, int width, int height, BufferedImage awtBufferedImage) {
+    protected Texture(ByteBuffer buffer, int width, int height, BufferedImage awtBufferedImage, int glTexMinFilter, int glTexMagFilter) {
         id = glGenTextures();
         this.width = width;
         this.height = height;
@@ -92,19 +92,23 @@ public class Texture extends Displayable implements TextureType {
 
         glBindTexture(GL_TEXTURE_2D, id);
 
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glTexMinFilter);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glTexMagFilter);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this.width, this.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
         this.awtBufferedImage = awtBufferedImage;
     }
 
-    public static Texture fromFile(String path) {
-        return fromStream(BaseLoader.getFileStream(path));
+    protected Texture(ByteBuffer buffer, int width, int height, BufferedImage awtBufferedImage, int glTexFilters) {
+        this(buffer, width, height, awtBufferedImage, glTexFilters, glTexFilters);
     }
 
-    public static Texture fromStream(InputStream stream) {
+    protected Texture(ByteBuffer buffer, int width, int height, BufferedImage awtBufferedImage) {
+        this(buffer, width, height, awtBufferedImage, GL_NEAREST);
+    }
+
+    public static Texture fromStream(InputStream stream, int glTexMinFilter, int glTexMagFilter) {
         Texture texture = null;
         try {
             BufferedImage image;
@@ -125,17 +129,13 @@ public class Texture extends Displayable implements TextureType {
             }
 
             buffer.flip();
-            texture = new Texture(buffer, image.getWidth(), image.getHeight(), image);
+            texture = new Texture(buffer, image.getWidth(), image.getHeight(), image, glTexMinFilter, glTexMagFilter);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return texture;
-    }
-
-    public static Texture fromResources(String path) {
-        return fromStream(BaseLoader.getResourceAsStream(path));
     }
 
     public void free() {
