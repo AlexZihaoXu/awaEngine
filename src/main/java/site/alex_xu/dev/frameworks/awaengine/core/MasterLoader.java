@@ -1,10 +1,12 @@
 package site.alex_xu.dev.frameworks.awaengine.core;
 
+import site.alex_xu.dev.frameworks.awaengine.audio.Audio;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.AssetNotFoundException;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Font;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Texture;
 
 import java.awt.*;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -36,13 +38,14 @@ public final class MasterLoader {
     public static final class resources {
         private static final HashMap<String, Texture> loadedTextures = new HashMap<>();
         private static final HashMap<String, Font> loadedFonts = new HashMap<>();
+        private static final HashMap<String, Audio> loadedAudios = new HashMap<>();
 
         public static Texture getTexture(String path, int glTexMinFilter, int glTexMagFilter) {
 
             String key = glTexMinFilter + "&" + glTexMagFilter + "|" + path;
 
             if (!loadedTextures.containsKey(key)) {
-                Texture texture = Texture.fromStream(BaseLoader.getResourceAsStream(path), glTexMinFilter, glTexMagFilter);
+                Texture texture = Texture.fromStream(new BufferedInputStream(BaseLoader.getResourceAsStream(path)), glTexMinFilter, glTexMagFilter);
                 if (texture != null)
                     loadedTextures.put(key, texture);
                 else
@@ -51,7 +54,6 @@ public final class MasterLoader {
 
             return loadedTextures.get(key);
         }
-
 
         public static Texture getTexture(String path, int glTexFilters) {
             return getTexture(path, glTexFilters, glTexFilters);
@@ -80,11 +82,27 @@ public final class MasterLoader {
 
             return loadedFonts.get(path);
         }
+
+        public static Audio getAudio(String path) {
+            if (!loadedAudios.containsKey(path)) {
+                Audio audio;
+                try {
+                    audio = Audio.fromStream(BaseLoader.getResourceAsStream(path));
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                    throw new AssetNotFoundException("Could not load audio from resource: " + path);
+                }
+                loadedAudios.put(path, audio);
+            }
+            return loadedAudios.get(path);
+        }
+
     }
 
     public static final class files {
         private static final HashMap<String, Texture> loadedTextures = new HashMap<>();
         private static final HashMap<String, Font> loadedFonts = new HashMap<>();
+        private static final HashMap<String, Audio> loadedAudios = new HashMap<>();
 
         public static Texture getTexture(String path, int glTexMinFilter, int glTexMagFilter) {
             if (!loadedTextures.containsKey(path)) {
@@ -117,7 +135,7 @@ public final class MasterLoader {
                     stream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    throw new AssetNotFoundException("Could not load font from resource: " + path);
+                    throw new AssetNotFoundException("Could not load font from path: " + path);
                 }
                 if (awtFont != null) {
                     loadedFonts.put(path, FontLoader.load(awtFont));
@@ -127,6 +145,19 @@ public final class MasterLoader {
             }
 
             return loadedFonts.get(path);
+        }
+
+        public static Audio getAudio(String path) {
+            if (!loadedAudios.containsKey(path)) {
+                Audio audio;
+                try {
+                    audio = Audio.fromStream(BaseLoader.getFileStream(path));
+                } catch (NullPointerException e) {
+                    throw new AssetNotFoundException("Could not load audio from path: " + path);
+                }
+                loadedAudios.put(path, audio);
+            }
+            return loadedAudios.get(path);
         }
     }
 }

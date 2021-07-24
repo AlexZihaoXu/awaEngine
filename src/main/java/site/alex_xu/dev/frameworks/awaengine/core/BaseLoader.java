@@ -1,12 +1,8 @@
 package site.alex_xu.dev.frameworks.awaengine.core;
 
-import site.alex_xu.dev.frameworks.awaengine.graphics.Font;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 public class BaseLoader {
 

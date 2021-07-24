@@ -1,7 +1,6 @@
 package site.alex_xu.dev.frameworks.awaengine.graphics;
 
 import org.lwjgl.BufferUtils;
-import site.alex_xu.dev.frameworks.awaengine.core.BaseLoader;
 import site.alex_xu.dev.frameworks.awaengine.exceptions.TextureException;
 
 import javax.imageio.ImageIO;
@@ -113,6 +112,8 @@ public class Texture extends Displayable implements TextureType {
         try {
             BufferedImage image;
             image = ImageIO.read(stream);
+            if (image == null)
+                return null;
             int[] pixels = new int[image.getWidth() * image.getHeight()];
             image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
 

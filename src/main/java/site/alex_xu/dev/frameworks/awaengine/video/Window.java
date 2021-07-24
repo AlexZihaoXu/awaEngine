@@ -6,6 +6,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.opengl.ImageIOImageData;
 import site.alex_xu.dev.frameworks.awaengine.audio.Audio;
+import site.alex_xu.dev.frameworks.awaengine.audio.Listener;
 import site.alex_xu.dev.frameworks.awaengine.audio.SoundSource;
 import site.alex_xu.dev.frameworks.awaengine.controls.Keyboard;
 import site.alex_xu.dev.frameworks.awaengine.controls.Mouse;
@@ -403,7 +404,7 @@ public abstract class Window extends Renderable {
 
         try {
             AL.create();
-            Audio.setListenerPos(0, 0, 0);
+            Listener.setListenerPos(0, 0, 0);
         } catch (LWJGLException e) {
             e.printStackTrace();
         }
@@ -429,6 +430,9 @@ public abstract class Window extends Renderable {
                 Time.tps = 1f / Time.delta;
                 calculateUpdateStatistics();
                 if (Time.delta <= 0) continue;
+                Memory.used = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+                Memory.free = Memory.total - Memory.used;
+                Memory.usage = Memory.used / (float) Memory.total;
                 handleEvents();
                 update();
                 SceneManager.updateScene(scene);

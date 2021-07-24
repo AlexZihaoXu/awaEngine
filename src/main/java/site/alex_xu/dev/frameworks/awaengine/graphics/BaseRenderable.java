@@ -2,8 +2,8 @@ package site.alex_xu.dev.frameworks.awaengine.graphics;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-import site.alex_xu.dev.frameworks.awaengine.scene.Node;
 import site.alex_xu.dev.frameworks.awaengine.core.Settings;
+import site.alex_xu.dev.frameworks.awaengine.scene.Node;
 import site.alex_xu.dev.utils.FastMath;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -50,25 +50,22 @@ public abstract class BaseRenderable extends Displayable {
     protected static void _instancePrepare(BaseRenderable renderable) {
         renderable.prepare();
     }
+
     protected static void _instanceBind(BaseRenderable renderable) {
         renderable.bind();
     }
+
     protected static void _instanceUnbind(BaseRenderable renderable) {
         renderable.unbind();
     }
+
     protected static void _instanceBeginRender(BaseRenderable renderable) {
         renderable.beginRender();
     }
+
     protected static void _instanceEndRender(BaseRenderable renderable) {
         renderable.endRender();
     }
-
-    private static class NodeManager extends Node {
-        public static void drawNode(Node node, Renderable renderable) {
-            instanceDrawTo(node, renderable);
-        }
-    }
-
 
     abstract protected void prepare();
 
@@ -120,7 +117,6 @@ public abstract class BaseRenderable extends Displayable {
     abstract protected void beginRender();
 
     abstract protected void endRender();
-
 
     // Settings
     public void stroke(float r, float g, float b, float a) {
@@ -324,6 +320,12 @@ public abstract class BaseRenderable extends Displayable {
     public void popMatrix() {
         bindContext();
         glPopMatrix();
+    }
+
+    private static class NodeManager extends Node {
+        public static void drawNode(Node node, Renderable renderable) {
+            instanceDrawTo(node, renderable);
+        }
     }
 
 }

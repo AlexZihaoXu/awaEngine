@@ -1,7 +1,6 @@
 package site.alex_xu.dev.frameworks.awaengine.scene;
 
 import site.alex_xu.dev.frameworks.awaengine.exceptions.DuplicateAttachingNodeException;
-import site.alex_xu.dev.frameworks.awaengine.graphics.BaseRenderable;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.utils.Vec2D;
 
@@ -9,12 +8,12 @@ import java.awt.*;
 import java.util.HashSet;
 
 public class Node extends Renderable {
-    private boolean isAttached = false;
     public final Vec2D position = new Vec2D();
     public final Vec2D origin = new Vec2D();
     public final Vec2D scale = new Vec2D(1, 1);
     private final HashSet<Node> childrenNodes = new HashSet<>();
     public float rotation = 0;
+    private boolean isAttached = false;
     private Renderable boundRenderable = null;
 
     protected static void instanceDrawTo(Node node, Renderable renderable) {

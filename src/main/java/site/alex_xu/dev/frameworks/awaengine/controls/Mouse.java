@@ -9,11 +9,14 @@ import java.util.HashSet;
 
 public class Mouse extends Core {
 
+    public static final Vec2D position = new Vec2D();
     private static final boolean[] buttonStates = new boolean[16];
     private static final HashSet<Mouse> registeredListeners = new HashSet<>();
     private boolean listenerCreated = false;
 
-    public static final Vec2D position = new Vec2D();
+    public Mouse() {
+
+    }
 
     public static float getX() {
         return position.x;
@@ -119,10 +122,6 @@ public class Mouse extends Core {
         removingList.forEach(registeredListeners::remove);
     }
 
-    public Mouse() {
-
-    }
-
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -131,6 +130,7 @@ public class Mouse extends Core {
 
     public void createListener() {
         if (!listenerCreated) {
+            //noinspection SynchronizationOnStaticField
             synchronized (registeredListeners) {
                 registeredListeners.add(this);
             }
@@ -140,6 +140,7 @@ public class Mouse extends Core {
 
     public void destroyListener() {
         if (listenerCreated) {
+            //noinspection SynchronizationOnStaticField
             synchronized (registeredListeners) {
                 registeredListeners.remove(this);
             }

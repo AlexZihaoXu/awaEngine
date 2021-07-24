@@ -8,10 +8,16 @@ version '1.0.0-pre1'
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libraries/', include: '**/*.jar')
+    implementation 'org.lwjgl.lwjgl:lwjgl:2.9.3'
+    implementation 'org.slick2d:slick2d-core:1.0.2'
+    implementation 'com.github.AlexZihaoXu:LibAlexUtils:1.0-SNAPSHOT'
+    implementation 'org.lwjgl.lwjgl:lwjgl_util:2.9.3'
 }
 
 jar {

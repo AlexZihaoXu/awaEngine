@@ -7,11 +7,119 @@ import java.util.HashSet;
 
 public class Keyboard extends Core {
 
+    private static final HashSet<Keyboard> registeredListeners = new HashSet<>();
+    protected boolean acceptRepeatKeys;
     private boolean listenerCreated = false;
 
-    protected boolean acceptRepeatKeys;
+    public Keyboard(boolean acceptRepeatKeys) {
+        this.acceptRepeatKeys = acceptRepeatKeys;
+    }
 
-    private static final HashSet<Keyboard> registeredListeners = new HashSet<>();
+    public Keyboard() {
+        this(false);
+    }
+
+    protected static void _internalKeyboardEvents() {
+        while (org.lwjgl.input.Keyboard.next()) {
+            boolean isRepeat = org.lwjgl.input.Keyboard.isRepeatEvent();
+            int eventKey = org.lwjgl.input.Keyboard.getEventKey();
+            boolean eventKeyState = org.lwjgl.input.Keyboard.getEventKeyState();
+            char character = org.lwjgl.input.Keyboard.getEventCharacter();
+
+            if (eventKeyState) {
+                _internalOnPress(isRepeat, eventKey, character);
+            } else {
+                _internalOnRelease(eventKey);
+            }
+        }
+    }
+
+    private static void _internalOnPress(boolean isRepeat, int key, char character) {
+        ArrayList<Keyboard> removingList = new ArrayList<>();
+        registeredListeners.forEach(keyboard -> {
+            try {
+                if (!(isRepeat && !keyboard.acceptRepeatKeys))
+                    keyboard.onPress(key, isRepeat, character);
+            } catch (Exception e) {
+                e.printStackTrace();
+                removingList.add(keyboard);
+                System.err.println("A Keyboard Listener has been un-registered due to an exception occurred.");
+            }
+        });
+        removingList.forEach(registeredListeners::remove);
+    }
+
+    private static void _internalOnRelease(int key) {
+        ArrayList<Keyboard> removingList = new ArrayList<>();
+        registeredListeners.forEach(keyboard -> {
+            try {
+                keyboard.onRelease(key);
+            } catch (Exception e) {
+                e.printStackTrace();
+                removingList.add(keyboard);
+                System.err.println("A Keyboard Listener has been un-registered due to an exception occurred.");
+            }
+        });
+        removingList.forEach(registeredListeners::remove);
+    }
+
+    public static int getKeyIndex(String keyName) {
+        return org.lwjgl.input.Keyboard.getKeyIndex(keyName);
+    }
+
+    public static String getKeyName(int key) {
+        return org.lwjgl.input.Keyboard.getKeyName(key);
+    }
+
+    public static boolean isKeyPressed(int key) {
+        return org.lwjgl.input.Keyboard.isKeyDown(key);
+    }
+
+    public static boolean isKeyReleased(int key) {
+        return !isKeyPressed(key);
+    }
+
+    public boolean isKeyDown(int key) {
+        return isKeyPressed(key);
+    }
+
+    public boolean isKeyUp(int key) {
+        return isKeyReleased(key);
+    }
+
+    public void createListener() {
+        if (!listenerCreated) {
+            //noinspection SynchronizationOnStaticField
+            synchronized (registeredListeners) {
+                registeredListeners.add(this);
+            }
+            listenerCreated = true;
+        }
+    }
+
+    public void destroyListener() {
+        if (listenerCreated) {
+            //noinspection SynchronizationOnStaticField
+            synchronized (registeredListeners) {
+                registeredListeners.remove(this);
+            }
+            listenerCreated = false;
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        destroyListener();
+    }
+
+    public void onPress(int key, boolean isRepeat, char character) {
+
+    }
+
+    public void onRelease(int key) {
+
+    }
 
     public static class Key {
 
@@ -147,113 +255,5 @@ public class Keyboard extends Core {
         public static final int KEY_APPS = 221;
         public static final int KEY_POWER = 222;
         public static final int KEY_SLEEP = 223;
-    }
-
-    protected static void _internalKeyboardEvents() {
-        while (org.lwjgl.input.Keyboard.next()) {
-            boolean isRepeat = org.lwjgl.input.Keyboard.isRepeatEvent();
-            int eventKey = org.lwjgl.input.Keyboard.getEventKey();
-            boolean eventKeyState = org.lwjgl.input.Keyboard.getEventKeyState();
-            char character = org.lwjgl.input.Keyboard.getEventCharacter();
-
-            if (eventKeyState) {
-                _internalOnPress(isRepeat, eventKey, character);
-            } else {
-                _internalOnRelease(eventKey);
-            }
-        }
-    }
-
-    private static void _internalOnPress(boolean isRepeat, int key, char character) {
-        ArrayList<Keyboard> removingList = new ArrayList<>();
-        registeredListeners.forEach(keyboard -> {
-            try {
-                if (!(isRepeat && !keyboard.acceptRepeatKeys))
-                    keyboard.onPress(key, isRepeat, character);
-            } catch (Exception e) {
-                e.printStackTrace();
-                removingList.add(keyboard);
-                System.err.println("A Keyboard Listener has been un-registered due to an exception occurred.");
-            }
-        });
-        removingList.forEach(registeredListeners::remove);
-    }
-
-    private static void _internalOnRelease(int key) {
-        ArrayList<Keyboard> removingList = new ArrayList<>();
-        registeredListeners.forEach(keyboard -> {
-            try {
-                keyboard.onRelease(key);
-            } catch (Exception e) {
-                e.printStackTrace();
-                removingList.add(keyboard);
-                System.err.println("A Keyboard Listener has been un-registered due to an exception occurred.");
-            }
-        });
-        removingList.forEach(registeredListeners::remove);
-    }
-
-    public static int getKeyIndex(String keyName) {
-        return org.lwjgl.input.Keyboard.getKeyIndex(keyName);
-    }
-
-    public static String getKeyName(int key) {
-        return org.lwjgl.input.Keyboard.getKeyName(key);
-    }
-
-    public static boolean isKeyPressed(int key) {
-        return org.lwjgl.input.Keyboard.isKeyDown(key);
-    }
-
-    public static boolean isKeyReleased(int key) {
-        return !isKeyPressed(key);
-    }
-
-    public boolean isKeyDown(int key) {
-        return isKeyPressed(key);
-    }
-
-    public boolean isKeyUp(int key) {
-        return isKeyReleased(key);
-    }
-
-    public Keyboard(boolean acceptRepeatKeys) {
-        this.acceptRepeatKeys = acceptRepeatKeys;
-    }
-
-    public Keyboard() {
-        this(false);
-    }
-
-    public void createListener() {
-        if (!listenerCreated) {
-            synchronized (registeredListeners) {
-                registeredListeners.add(this);
-            }
-            listenerCreated = true;
-        }
-    }
-
-    public void destroyListener() {
-        if (listenerCreated) {
-            synchronized (registeredListeners) {
-                registeredListeners.remove(this);
-            }
-            listenerCreated = false;
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        destroyListener();
-    }
-
-    public void onPress(int key, boolean isRepeat, char character) {
-
-    }
-
-    public void onRelease(int key) {
-
     }
 }

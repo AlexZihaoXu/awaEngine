@@ -1,5 +1,6 @@
 package site.alex_xu.dev.frameworks.awaengine.scene;
 
+import site.alex_xu.dev.frameworks.awaengine.audio.SoundSourcePool;
 import site.alex_xu.dev.frameworks.awaengine.graphics.BaseRenderable;
 import site.alex_xu.dev.frameworks.awaengine.graphics.Renderable;
 import site.alex_xu.dev.frameworks.awaengine.video.Window;
@@ -12,6 +13,7 @@ public abstract class Scene extends Renderable {
     private final Camera camera = new Camera();
     private final Node rootNode = new Node();
     private final CamNode camNode = new CamNode(this);
+    private final SoundSourcePool pool = new SoundSourcePool(256);
     private BaseRenderable renderTarget;
 
     public Scene(BaseRenderable renderTarget) {
@@ -34,6 +36,10 @@ public abstract class Scene extends Renderable {
     protected static void _drawScene(Scene scene, Renderable target) {
         target.blit(scene.camNode);
         scene.drawUI();
+    }
+
+    public SoundSourcePool getSoundSourcePool() {
+        return pool;
     }
 
     public int getWidth() {
@@ -88,27 +94,6 @@ public abstract class Scene extends Renderable {
 
     abstract public void drawUI();
 
-    private static class CamNode extends Node {
-        Scene scene;
-
-        CamNode(Scene scene) {
-            this.scene = scene;
-        }
-
-        @Override
-        public void draw() {
-            scene.draw();
-            scene.blit(scene.rootNode);
-        }
-
-        @Override
-        public void update() {
-            super.update();
-            scene.rootNode.updateTree();
-        }
-    }
-
-
     @Override
     protected void bind() {
         _instanceBind(renderTarget);
@@ -137,5 +122,25 @@ public abstract class Scene extends Renderable {
     @Override
     protected void endRender() {
         _instanceEndRender(renderTarget);
+    }
+
+    private static class CamNode extends Node {
+        Scene scene;
+
+        CamNode(Scene scene) {
+            this.scene = scene;
+        }
+
+        @Override
+        public void draw() {
+            scene.draw();
+            scene.blit(scene.rootNode);
+        }
+
+        @Override
+        public void update() {
+            super.update();
+            scene.rootNode.updateTree();
+        }
     }
 }

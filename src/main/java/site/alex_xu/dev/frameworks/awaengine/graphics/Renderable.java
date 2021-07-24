@@ -231,6 +231,7 @@ public abstract class Renderable extends BaseRenderable {
     public void blit(Displayable displayable) {
         blit(0, 0, displayable);
     }
+
     public void blit(int x, int y, Displayable displayable) {
         blit((float) x, (float) y, displayable);
     }
