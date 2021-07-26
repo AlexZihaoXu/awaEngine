@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.AlexZihaoXu:awaEngine:1.0-pre1'
+    implementation 'com.github.AlexZihaoXu:awaEngine:1.0.0-pre1'
     implementation 'com.github.AlexZihaoXu:LibAlexUtils:1.0-SNAPSHOT'
 }
 ```
